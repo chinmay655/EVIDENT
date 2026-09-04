@@ -42,6 +42,8 @@ api_router.include_router(student_router)
 api_router.include_router(admin_router)
 app.include_router(api_router)
 
+logger.info("REGISTERED ROUTES: %s", [route.path for route in app.routes])
+
 _frontend = os.environ.get("FRONTEND_URL", "").strip()
 _origins = os.environ.get("CORS_ORIGINS", "*")
 allow_origins = [_frontend] if _frontend and _origins == "*" else _origins.split(",")
