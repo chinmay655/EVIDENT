@@ -1,0 +1,76 @@
+import { useEffect, useState, useCallback } from "react";
+import { api } from "@/lib/apiClient";
+import { PublicLayout } from "@/components/PublicNav";
+import { ProjectCard } from "@/components/ProjectCard";
+import { Loading, EmptyState } from "@/components/common";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search } from "lucide-react";
+
+const CATEGORIES = ["All", "Web Development", "Data Analytics", "Python", "AI/ML", "UI/UX", "Cybersecurity", "Cloud/DevOps", "Business/Marketing"];
+const DIFFICULTIES = ["All", "Beginner", "Intermediate", "Advanced"];
+const SORTS = [["newest", "Newest"], ["price_low", "Price: Low to High"], ["price_high", "Price: High to Low"], ["popular", "Most Popular"]];
+
+export default function Projects() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({ search: "", category: "All", difficulty: "All", sort: "newest" });
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = { sort: filters.sort, limit: 24 };
+      if (filters.search) params.search = filters.search;
+      if (filters.category !== "All") params.category = filters.category;
+      if (filters.difficulty !== "All") params.difficulty = filters.difficulty;
+      const { data } = await api.get("/projects", { params });
+      setItems(data.items);
+    } finally {
+      setLoading(false);
+    }
+  }, [filters]);
+
+  useEffect(() => { const t = setTimeout(load, 250); return () => clearTimeout(t); }, [load]);
+
+  const set = (k, v) => setFilters((f) => ({ ...f, [k]: v }));
+
+  return (
+    <PublicLayout>
+      <div className="border-b border-zinc-200 bg-white">
+        <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+          <h1 className="text-4xl font-bold tracking-tight text-slate-900">Project Catalog</h1>
+          <p className="mt-3 max-w-2xl text-slate-600">Real, structured projects designed to produce verifiable experience. Choose one, build it, prove it.</p>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
+        <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input value={filters.search} onChange={(e) => set("search", e.target.value)} placeholder="Search projects, skills…" className="pl-9" data-testid="project-search" />
+          </div>
+          <Select value={filters.category} onValueChange={(v) => set("category", v)}>
+            <SelectTrigger className="md:w-52" data-testid="filter-category"><SelectValue /></SelectTrigger>
+            <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+          </Select>
+          <Select value={filters.difficulty} onValueChange={(v) => set("difficulty", v)}>
+            <SelectTrigger className="md:w-40" data-testid="filter-difficulty"><SelectValue /></SelectTrigger>
+            <SelectContent>{DIFFICULTIES.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
+          </Select>
+          <Select value={filters.sort} onValueChange={(v) => set("sort", v)}>
+            <SelectTrigger className="md:w-48" data-testid="filter-sort"><SelectValue /></SelectTrigger>
+            <SelectContent>{SORTS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+
+        {loading ? <Loading /> : items.length === 0 ? (
+          <EmptyState title="No projects found" description="Try adjusting your search or filters." testId="projects-empty" />
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {items.map((p) => <ProjectCard key={p.id} project={p} />)}
+          </div>
+        )}
+      </div>
+    </PublicLayout>
+  );
+}

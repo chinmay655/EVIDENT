@@ -1,0 +1,133 @@
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Menu, X, LayoutDashboard, ShieldCheck } from "lucide-react";
+
+export function PublicNav() {
+  const { user, isAdmin, logout } = useAuth();
+  const [open, setOpen] = useState(false);
+  const nav = useNavigate();
+
+  const links = [
+    { to: "/projects", label: "Projects" },
+    { to: "/how-it-works", label: "How it Works" },
+    { to: "/about", label: "About" },
+    { to: "/faq", label: "FAQ" },
+  ];
+
+  return (
+    <header className="sticky top-0 z-40 border-b border-zinc-200/70 bg-white/70 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
+        <Link to="/" className="flex items-center gap-2" data-testid="logo-link">
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-900 text-white text-[11px] font-bold">E</div>
+          <span className="font-display text-lg font-bold tracking-tight text-slate-900">EVIDENT</span>
+        </Link>
+
+        <nav className="hidden items-center gap-8 md:flex">
+          {links.map((l) => (
+            <Link key={l.to} to={l.to} className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900" data-testid={`nav-${l.label.toLowerCase().replace(/\s/g, "-")}`}>
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="hidden items-center gap-3 md:flex">
+          {user ? (
+            <>
+              {isAdmin && (
+                <Button variant="outline" size="sm" onClick={() => nav("/admin")} data-testid="nav-admin-btn">
+                  <ShieldCheck className="mr-1.5 h-4 w-4" /> Admin
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={() => nav("/dashboard")} data-testid="nav-dashboard-btn">
+                <LayoutDashboard className="mr-1.5 h-4 w-4" /> Dashboard
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => { logout(); nav("/"); }} data-testid="nav-logout-btn">Log out</Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" onClick={() => nav("/login")} data-testid="nav-login-btn">Log in</Button>
+              <Button size="sm" className="bg-slate-900 hover:bg-slate-800" onClick={() => nav("/register")} data-testid="nav-register-btn">Get Started</Button>
+            </>
+          )}
+        </div>
+
+        <button className="md:hidden" onClick={() => setOpen(!open)} data-testid="mobile-menu-toggle" aria-label="Toggle menu">
+          {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        </button>
+      </div>
+
+      {open && (
+        <div className="border-t border-zinc-200 bg-white px-6 py-4 md:hidden">
+          <div className="flex flex-col gap-3">
+            {links.map((l) => (
+              <Link key={l.to} to={l.to} onClick={() => setOpen(false)} className="text-sm font-medium text-slate-700" data-testid={`mnav-${l.label.toLowerCase().replace(/\s/g, "-")}`}>{l.label}</Link>
+            ))}
+            <div className="mt-2 flex flex-col gap-2">
+              {user ? (
+                <>
+                  <Button variant="outline" size="sm" onClick={() => { setOpen(false); nav("/dashboard"); }}>Dashboard</Button>
+                  {isAdmin && <Button variant="outline" size="sm" onClick={() => { setOpen(false); nav("/admin"); }}>Admin</Button>}
+                  <Button variant="ghost" size="sm" onClick={() => { logout(); setOpen(false); nav("/"); }}>Log out</Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="ghost" size="sm" onClick={() => { setOpen(false); nav("/login"); }}>Log in</Button>
+                  <Button size="sm" className="bg-slate-900" onClick={() => { setOpen(false); nav("/register"); }}>Get Started</Button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </header>
+  );
+}
+
+export function Footer() {
+  return (
+    <footer className="border-t border-zinc-200 bg-white">
+      <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+        <div className="grid gap-8 md:grid-cols-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-900 text-white text-[11px] font-bold">E</div>
+              <span className="font-display text-lg font-bold text-slate-900">EVIDENT</span>
+            </div>
+            <p className="mt-3 max-w-xs text-sm text-slate-500">Build real projects. Generate verifiable proof of your practical skills.</p>
+          </div>
+          <FooterCol title="Platform" links={[["Projects", "/projects"], ["How it Works", "/how-it-works"], ["FAQ", "/faq"]]} />
+          <FooterCol title="Company" links={[["About", "/about"], ["Contact", "/contact"]]} />
+          <FooterCol title="Legal" links={[["Privacy", "/privacy"], ["Terms", "/terms"], ["Refund Policy", "/refund-policy"]]} />
+        </div>
+        <div className="mt-10 border-t border-zinc-200 pt-6 text-xs text-slate-400">
+          © {new Date().getFullYear()} EVIDENT. A project experience platform.
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+function FooterCol({ title, links }) {
+  return (
+    <div>
+      <p className="text-xs uppercase tracking-[0.15em] font-semibold text-slate-500">{title}</p>
+      <ul className="mt-4 space-y-2">
+        {links.map(([label, to]) => (
+          <li key={to}><Link to={to} className="text-sm text-slate-600 hover:text-slate-900">{label}</Link></li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export function PublicLayout({ children }) {
+  return (
+    <div className="flex min-h-screen flex-col">
+      <PublicNav />
+      <main className="flex-1">{children}</main>
+      <Footer />
+    </div>
+  );
+}

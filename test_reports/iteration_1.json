@@ -1,0 +1,106 @@
+{
+  "summary": "Full-stack E2E QA of EVIDENT against the external HTTPS preview URL. Backend: authored a 45-test pytest regression suite (/app/backend/tests/) covering health, catalog, auth+cookies+lockout, RBAC, enrollment/payment security, server-controlled price, workspace access control, submissions/review/revision versioning, certificate issuance+PDF+verify+revoke+reissue, evidence/portfolio visibility, admin project CRUD + version isolation, admin lists and audit. Result 44/45 pass (97.8%). Frontend: Playwright-drove the complete journey - home/nav, catalog search+filter, project detail, student register -> resume upload -> sandbox pay -> workspace unlock -> all 8 tabs -> mark task -> GitHub submission -> ask question -> dashboard; admin login -> dashboard+charts -> project wizard create+publish (appears in public catalog) -> submission review (empty-feedback guard, approve) -> questions answer -> certificates list (copy/revoke/reissue icons) -> enrollments/students/audit; student certificate download + public /verify (Valid + Not Valid cases) + evidence make-public + public evidence page + public portfolio + mobile nav. All flows worked. One real security defect and a few UX/testability issues found.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "POST /api/auth/login",
+        "issue": "Brute-force lockout is ineffective in the deployed environment. _check_lockout/_record_fail key the counter on `request.client.host` which behind the k8s ingress is the ingress pod IP (observed 10.79.139.10 and 10.79.139.11 for the same real client). Attempts get split across proxy IPs so the count never reaches MAX_ATTEMPTS: 6 consecutive wrong passwords for one account returned 401,401,401,401,401,401 (no 429). DB shows two separate login_attempts docs for the same email (count 4 and 2). Fix: derive the client IP from the X-Forwarded-For header (as core.audit() already does) or key the counter on the email alone.",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": [
+      {
+        "endpoint": "POST /api/admin/submissions/{id}/approve",
+        "issue": "Certificate issuance is wrapped in `try/except Exception: pass` (routes_admin.py ~line 421-425). If PDF generation or object storage fails, the submission is marked approved but no certificate exists and nobody is notified - a silent failure. Log the exception and surface a partial-success signal."
+      },
+      {
+        "endpoint": "PATCH /api/tasks/{id}/progress",
+        "issue": "progress.percent is computed only from admin_approved tasks, so a student who completes tasks still sees 0%. Backend is self-consistent (student_completed is returned separately) but the contract is misleading for the UI - see frontend issue."
+      },
+      {
+        "endpoint": "POST /api/payments/create-order",
+        "issue": "Fetches `project` from DB but only uses it for the display name; `amount` is derived from the enrollment price snapshot (correct). Dead read + unused `kid` when sandbox. Cosmetic only."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Workspace header (student/Workspace.jsx)",
+        "issue": "Progress stays at 0% after a student ticks tasks complete (it only reflects admin-approved tasks). Screenshot: 1 of 8 tasks shows the 'Completed' badge while the header/dashboard still read 'Progress 0%'. Show student-completion % (or a second 'self-reported' bar) so the action has visible feedback.",
+        "selector": "[data-testid=\"task-check-0\"] / Progress in ws header",
+        "priority": "MEDIUM"
+      },
+      {
+        "component": "Workspace header",
+        "issue": "After approval the badge reads 'Completed' but the countdown still shows '27 days left'. Hide/replace the deadline countdown for completed/approved enrollments.",
+        "selector": "workspace header",
+        "priority": "LOW"
+      },
+      {
+        "component": "student/Certificates.jsx",
+        "issue": "The Download / Verify buttons on the student Certificates page have no data-testid (the download-cert-btn testid only exists in the Workspace certificate tab), so this page is not automatable.",
+        "selector": "[data-testid=\"download-cert-btn\"] (count 0 on /certificates)",
+        "priority": "LOW"
+      },
+      {
+        "component": "admin/AdminSubmissions.jsx",
+        "issue": "Rows are clickable only via the whole <tr> onClick; there is no visible affordance (no 'Review' action button) and no keyboard/link navigation - not accessible. testid submission-row-{id} exists, so automation is fine, but add a real link/button.",
+        "selector": "[data-testid^=\"submission-row-\"]",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Home page - 'THE EXPERIENCE GAP' section",
+        "issues": ["All three cards repeat the identical body copy 'Theoretical knowledge isn't enough. Recruiters want evidence of real work.' - looks like placeholder duplication; give each question its own supporting line."]
+      },
+      {
+        "screen": "Login / Register (AuthShell)",
+        "issues": ["On 1920px desktop the dark left panel is ~60% empty vertical space (headline sits at mid-left, nothing else) - consider centering the panel content or adding proof/testimonial content."]
+      },
+      {
+        "screen": "Admin dashboard",
+        "issues": ["'Project popularity' Y-axis labels wrap to 3 lines and are clipped for long project titles; truncate with ellipsis or widen the axis."]
+      },
+      {
+        "screen": "All authenticated pages",
+        "issues": ["Console shows a 401 on first paint from the /auth/me bootstrap probe for anonymous visitors - harmless but noisy; suppress the console error for the expected unauthenticated case."]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/backend/tests/conftest.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "HIGH: Fix login brute-force lockout to use the X-Forwarded-For client IP (or email-only key) - lockout is currently bypassable behind the ingress (verified: 6 failed logins, zero 429s).",
+    "MEDIUM: Surface student task-completion progress in the workspace/dashboard (currently 0% until admin approval).",
+    "LOW: Replace the bare `except Exception: pass` around issue_certificate() in approve_submission with logging/error surfacing.",
+    "LOW: Add data-testid to Download/Verify buttons on student /certificates page.",
+    "LOW: Hide the 'days left' countdown once an enrollment is completed.",
+    "LOW: De-duplicate the three identical 'experience gap' card descriptions on the home page.",
+    "Optional cleanup: /app/tests/test_backend.py is now a stale subset of /app/backend/tests/backend_test.py and defaults to localhost:8001 (cookies are Secure so it will fail over http) - delete or point it at REACT_APP_BACKEND_URL."
+  ],
+  "critical_code_review_comments": [
+    "core.py: lockout/rate-limit identifiers must not use request.client.host in a k8s/ingress deployment; audit() already handles X-Forwarded-For - reuse that helper.",
+    "routes_admin.py approve_submission: swallowing all exceptions from issue_certificate() hides PDF/object-storage failures; log and return a warning flag.",
+    "services.compute_progress: percent ignores student_completed entirely; either expose a student_percent or document the semantics so the UI does not render a dead progress bar.",
+    "server.py CORS: allow_origins resolves to [FRONTEND_URL] with allow_credentials=True (correct, no wildcard+credentials). Note the ingress answers OPTIONS itself with 'access-control-allow-origin: *', so app-level CORS is only exercised on same-origin requests - fine for this deployment.",
+    "Auth playbook checks all pass: bcrypt hash is $2b$12$, login sets HttpOnly+Secure+SameSite=None cookies, seed_admin re-hashes when the .env password changes, forgot-password does not enumerate users."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py (new)",
+    "/app/backend/tests/conftest.py (new)",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "success_rate": {"backend": "97.8% (44/45 pytest)", "frontend": "100% of tested flows functional (4 cosmetic/UX issues)"},
+  "seed_data_creation": "Multiple TEST_ students registered via /api/auth/register (test_stud_*@example.com, Passw0rd!), one UI student test_ui_1788408165@example.com / Passw0rd! (paid, submitted, approved, cert EVD-2026-BC4888, evidence public), and TEST-prefixed admin projects ('TEST Wizard QA Project' published, 'TEST Version *' / 'TEST Project *' archived). Sandbox payments only - no real charges.",
+  "should_call_test_agent_after_fix": true,
+  "should_main_agent_self_test": false,
+  "test_credentials": "Admin: ghogalechinmay00@gmail.com / Admin@Evident2026 (super_admin). Student created by this run: test_ui_1788408165@example.com / Passw0rd! (completed enrollment with issued certificate + public evidence).",
+  "context_for_next_testing_agent": "Run `cd /app/backend && python -m pytest tests/ -q` (pytest.ini forces -n 2 --dist loadscope). conftest.py exposes helpers new_student(), enroll(), pay(), enrolled_student() and fixtures admin_client / first_project, all pointed at REACT_APP_BACKEND_URL (must use https - cookies are Secure). The only failing test is TestAuth::test_brute_force_lockout_after_5_failures, which reproduces the proxy-IP lockout bug; it should pass once the X-Forwarded-For fix lands. Frontend selectors verified: wizard uses wizard-step-0..8 (price/duration are on step 8, tasks on step 4) - wizard-next alone will not reach the price field; admin submissions rows are [data-testid^=\"submission-row-\"] (no anchor/button inside the row). Cleanup of TEST_* data was intentionally left in place so approved/certified fixtures remain available.",
+  "rca_of_the_issue": "Brute-force lockout: routes_auth._check_lockout/_record_fail build the identifier as f\"{request.client.host}:{email}\". In this Kubernetes deployment request.client.host is the ingress pod address, and traffic is load-balanced across several ingress pods, so consecutive failed logins from a single real client are recorded under different identifiers. Repro: POST /api/auth/login 6x with a wrong password for one account -> all 401, and db.login_attempts contains two docs for that email (counts 4 and 2) with different IP prefixes. Mitigation: parse the first entry of X-Forwarded-For (falling back to request.client.host) or drop the IP from the key entirely."
+}

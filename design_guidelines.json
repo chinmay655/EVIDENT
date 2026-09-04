@@ -1,0 +1,162 @@
+{
+  "brand": {
+    "name": "EVIDENT (Project Experience Platform)",
+    "mission": "Replace 'I don't have experience' with verifiable proof of real project execution.",
+    "emotional_tone": "Authoritative, Transparent, Career-Defining, Structural",
+    "theme_preference": "Light theme primary (Clean, open, trustworthy) with optional dark mode for workspaces.",
+    "anti_patterns": [
+      "No online course/LMS visual cliches (avoid graduation caps, generic checkmarks).",
+      "No excessive gradients, childish illustrations, or fake metrics.",
+      "No dark hacker themes.",
+      "No generic 'Bootstrap-style' UI cards with heavy drop shadows."
+    ]
+  },
+  "typography": {
+    "strategy": "The 'Old Money Tech' / High-Trust Pairing",
+    "primary_font": {
+      "family": "'Cabinet Grotesk', sans-serif",
+      "usage": "Headings (H1-H4), Big numbers, Key metrics",
+      "weight": "font-medium to font-bold",
+      "styling": "tracking-tight for large headings (H1/H2), leading-none"
+    },
+    "secondary_font": {
+      "family": "'Inter', sans-serif",
+      "usage": "Body text, UI elements, data tables, forms",
+      "weight": "font-normal to font-medium",
+      "styling": "tracking-normal, leading-relaxed for long-form text"
+    },
+    "hierarchy": {
+      "h1": "text-5xl sm:text-6xl tracking-tighter leading-tight text-slate-900",
+      "h2": "text-3xl sm:text-4xl tracking-tight leading-snug text-slate-800",
+      "h3": "text-xl sm:text-2xl font-semibold text-slate-800",
+      "body": "text-base text-slate-600",
+      "small_label": "text-xs uppercase tracking-[0.15em] font-semibold text-slate-500"
+    },
+    "forbidden_fonts": ["Space Grotesk", "Roboto", "Open Sans"]
+  },
+  "colors": {
+    "archetype": "SWISS & HIGH-CONTRAST + TACTICAL MINIMALISM",
+    "palette": {
+      "background": {
+        "default": "#FAFAFA",
+        "paper": "#FFFFFF",
+        "subtle": "#F4F4F5"
+      },
+      "text": {
+        "primary": "#09090B",
+        "secondary": "#52525B",
+        "tertiary": "#A1A1AA"
+      },
+      "brand": {
+        "primary": "#0F172A",
+        "accent": "#2563EB",
+        "success": "#16A34A",
+        "warning": "#D97706",
+        "error": "#DC2626"
+      },
+      "borders": {
+        "default": "#E4E4E7",
+        "focus": "#2563EB"
+      }
+    },
+    "rules": [
+      "Tinted Grey Rule: Greys should lean slightly cool (Slate/Zinc) to feel professional.",
+      "High Contrast Focus: Primary CTAs are solid Slate-900 (almost black) with white text, not standard blue.",
+      "Use Accent color (Blue) exclusively for active states, links, and verification badges.",
+      "Hover states must have explicitly defined text colors (e.g., hover:bg-slate-900 hover:text-white).",
+      "No full-screen or button gradients."
+    ]
+  },
+  "visual_enhancers": {
+    "surfaces": {
+      "marketing_nav": "Glassmorphism: bg-white/70 backdrop-blur-xl border-b border-zinc-200/50",
+      "dashboard_nav": "Solid: bg-white border-b border-zinc-200",
+      "cards": "Flat & Crisp: bg-white border border-zinc-200 rounded-lg shadow-sm (No heavy drop shadows)",
+      "modals": "Solid white with subtle dimming backdrop (bg-slate-900/40 backdrop-blur-sm)"
+    },
+    "borders": "1px crisp borders (border-zinc-200) everywhere to create structure without visual weight.",
+    "icons": {
+      "library": "lucide-react",
+      "style": "Minimal, 1.5px to 2px stroke, unfilled."
+    }
+  },
+  "grids_and_layouts": {
+    "marketing_page": {
+      "container": "max-w-7xl mx-auto px-6 lg:px-8",
+      "spacing": "Generous: py-24 to py-32 between sections",
+      "hero": "Asymmetric Bento Grid (grid-cols-1 md:grid-cols-12 gap-8) or massive typography with high-quality imagery."
+    },
+    "dashboard": {
+      "layout": "Collapsible left sidebar + top bar structure.",
+      "spacing": "High density: p-4 to p-8 padding for content areas.",
+      "grid": "grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6",
+      "widgets": "Top-left prioritized. Key metric gets col-span-2 or col-span-full on mobile."
+    },
+    "alignment": "Left-align dense text and forms. Center-align only for short hero headlines or zero-state empty screens.",
+    "technical": "Grid items must be direct children. Use display: grid."
+  },
+  "component_rules": {
+    "buttons": "Rectangular with subtle rounding (rounded-md). Strict interaction states (hover, focus ring, active scale).",
+    "inputs": "Shadcn UI inputs. 1px border. Focus state must use ring-2 ring-slate-900 or brand-accent ring-offset-2.",
+    "cards": "Avoid default card styling. Use cardless or highly minimal bounding boxes (border-zinc-200).",
+    "forms": "Use Shadcn Form, Input, Select, Checkbox. NO native select elements.",
+    "tables": "Dense, left-aligned, border-b only for rows (no vertical borders). Stick to text-sm.",
+    "forbidden_html": [
+      "<input type='date'> (Use Shadcn Calendar)",
+      "<select> (Use Shadcn Dropdown/Select)",
+      "Transparent headers (Always use blur or solid background over content)"
+    ]
+  },
+  "motion": {
+    "philosophy": "Functional & Snappy. No excessive bouncing.",
+    "hover_states": "Buttons and cards translate-y-[1px] or subtly change border/background color.",
+    "page_transitions": "Subtle fade-in (opacity-0 to opacity-100 over 300ms).",
+    "interactive": "Use sonner for instant toast feedback.",
+    "technical": "Avoid 'transition-all'. Specify properties: transition-colors, transition-transform."
+  },
+  "accessibility": {
+    "contrast": "Text must pass WCAG AA (4.5:1 for body, 3:1 for large text).",
+    "focus": "All interactive elements must have visible focus rings.",
+    "aria": "Include aria-labels for icon-only buttons.",
+    "testing": "MANDATORY: Add data-testid attributes to all interactive elements (e.g., data-testid='enroll-button', data-testid='submit-project')."
+  },
+  "media_and_images": {
+    "rules": "No placeholder images. Use direct URLs from the curated list. Use object-cover for hero backgrounds with a maximum black/30 or white/40 overlay.",
+    "curated_urls": {
+      "hero_student_working": {
+        "url": "https://images.unsplash.com/photo-1513258496099-48168024aec0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDF8MHwxfHNlYXJjaHwyfHxzdHVkZW50JTIwd29ya2luZyUyMGxhcHRvcCUyMGNsZWFufGVufDB8fHx8MTc4ODQwNTk3NXww&ixlib=rb-4.1.0&q=85",
+        "description": "Student in headphones working intensely on a laptop, perfect for hero section or 'Build' feature block."
+      },
+      "project_architecture": {
+        "url": "https://images.unsplash.com/photo-1782290547018-8bb89b8edf07?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzZ8MHwxfHNlYXJjaHwxfHxhcmNoaXRlY3QlMjBkcmFmdGluZyUyMHRhYmxlJTIwbW9kZXJufGVufDB8fHx8MTc4ODQwNTk3NXww&ixlib=rb-4.1.0&q=85",
+        "description": "Modern architect drafting table. Use as a metaphor for 'Project Workspace' or 'Building Real Products'."
+      },
+      "professional_portfolio": {
+        "url": "https://images.unsplash.com/photo-1493934558415-9d19f0b2b4d2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MDV8MHwxfHNlYXJjaHwzfHxwcm9mZXNzaW9uYWwlMjBtaW5pbWFsJTIwb2ZmaWNlJTIwZGVza3xlbnwwfHx8fDE3ODg0MDU5NzV8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Minimal professional office desk with an iMac. Good for showcasing the 'Evidence/Portfolio' outcome."
+      }
+    }
+  },
+  "3d_libraries": {
+    "strategy": "Not recommended for this specific professional use-case unless required for a specific marketing graphic. Rely on high-quality typography and 2D geometry.",
+    "charts": "Use Recharts (via Shadcn charts) for admin analytics and student progress."
+  },
+  "instructions_to_main_agent": {
+    "1_setup": "Install lucide-react, sonner, and tailwind-merge. Setup Shadcn UI components.",
+    "2_routing": "Implement marketing page (/), student dashboard (/dashboard), and admin dashboard (/admin).",
+    "3_execution": "Follow exact colors, typography, and spacing from this document. Apply data-testid to everything.",
+    "4_forms": "Build the enrollment checkout and project submission flows using Shadcn forms."
+  },
+  "universal_guidelines_for_main_agent": [
+    "You tend to converge toward generic outputs. Break the mold: make the UI feel like a premium career tool (think Linear, Vercel, or modern fintech) rather than a cheap LMS.",
+    "Do not apply 'transition: all' in CSS. Target specific transitions.",
+    "NEVER center-align the main App container. Respect natural reading flow.",
+    "NEVER use emojis as UI icons. Use lucide-react exclusively.",
+    "Always use the provided Unsplash URLs. Never use generic placeholder text or dummyimage.com.",
+    "Prioritize Shadcn components over custom HTML for interactive elements.",
+    "Ensure every page has a visible navigation bar and standard footer.",
+    "Use sonner for all application toasts (success/error states).",
+    "MANDATORY: Add data-testid attributes to ALL buttons, inputs, links, and actionable items.",
+    "MANDATORY: Do NOT use transparent backgrounds on headers or dropdowns that overlay content."
+  ]
+}

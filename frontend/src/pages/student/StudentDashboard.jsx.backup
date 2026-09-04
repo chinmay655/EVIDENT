@@ -1,0 +1,92 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { api } from "@/lib/apiClient";
+import { useAuth } from "@/context/AuthContext";
+import { DashboardLayout } from "@/components/DashboardLayout";
+import { ProjectCard } from "@/components/ProjectCard";
+import { Loading, EmptyState, StatCard, StatusBadge } from "@/components/common";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { FolderKanban, CheckCircle2, Award, Bell, ArrowRight, AlertCircle } from "lucide-react";
+
+export default function StudentDashboard() {
+  const { user } = useAuth();
+  const [data, setData] = useState(null);
+  useEffect(() => { api.get("/dashboard").then(({ data }) => setData(data)); }, []);
+
+  return (
+    <DashboardLayout title="Dashboard">
+      {!data ? <Loading /> : (
+        <div className="space-y-8">
+          <div>
+            <h2 className="font-display text-2xl font-bold text-slate-900">Welcome back, {user?.name?.split(" ")[0]}.</h2>
+            <p className="mt-1 text-slate-500">Here's where your project experience stands.</p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard label="Active Projects" value={data.stats.active} icon={FolderKanban} testId="stat-active" />
+            <StatCard label="Completed" value={data.stats.completed} icon={CheckCircle2} testId="stat-completed" />
+            <StatCard label="Certificates" value={data.stats.certificates} icon={Award} testId="stat-certificates" />
+            <StatCard label="Unread Alerts" value={data.stats.unread_notifications} icon={Bell} testId="stat-unread" />
+          </div>
+
+          {data.revision_requests.length > 0 && (
+            <div className="rounded-lg border border-orange-200 bg-orange-50 p-4">
+              <div className="flex items-center gap-2 text-orange-800"><AlertCircle className="h-5 w-5" /><p className="font-medium">You have {data.revision_requests.length} revision request(s)</p></div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {data.revision_requests.map((r) => <Button key={r.id} asChild size="sm" variant="outline" className="border-orange-300"><Link to={`/workspace/${r.id}`}>{r.project.title} →</Link></Button>)}
+              </div>
+            </div>
+          )}
+
+          <section>
+            <h3 className="text-lg font-semibold text-slate-900">Active projects</h3>
+            {data.active_projects.length === 0 ? (
+              <EmptyState className="mt-4" title="No active projects yet" description="Enroll in a project to start building experience."
+                action={<Button asChild className="bg-slate-900"><Link to="/projects" data-testid="browse-projects-btn">Browse Projects</Link></Button>} testId="active-empty" />
+            ) : (
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                {data.active_projects.map((e) => (
+                  <Link key={e.id} to={`/workspace/${e.id}`} data-testid={`active-project-${e.id}`} className="rounded-lg border border-zinc-200 bg-white p-5 transition-colors hover:border-slate-300">
+                    <div className="flex items-start justify-between gap-3">
+                      <h4 className="font-semibold text-slate-900">{e.project.title}</h4>
+                      <StatusBadge status={e.status} />
+                    </div>
+                    <div className="mt-4">
+                      <div className="flex justify-between text-xs text-slate-500"><span>Progress</span><span>{e.progress}%</span></div>
+                      <Progress value={e.progress} className="mt-1.5 h-2" />
+                    </div>
+                    <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-blue-600">Open workspace <ArrowRight className="h-3.5 w-3.5" /></span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {data.completed_projects.length > 0 && (
+            <section>
+              <h3 className="text-lg font-semibold text-slate-900">Completed projects</h3>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                {data.completed_projects.map((e) => (
+                  <Link key={e.id} to={`/workspace/${e.id}`} className="rounded-lg border border-zinc-200 bg-white p-5 hover:border-slate-300">
+                    <div className="flex items-center justify-between"><h4 className="font-semibold text-slate-900">{e.project.title}</h4><StatusBadge status={e.status} /></div>
+                    <p className="mt-2 text-sm text-slate-500">Completed — view your evidence and certificate.</p>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {data.recommended.length > 0 && (
+            <section>
+              <h3 className="text-lg font-semibold text-slate-900">Recommended for you</h3>
+              <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {data.recommended.map((p) => <ProjectCard key={p.id} project={p} />)}
+              </div>
+            </section>
+          )}
+        </div>
+      )}
+    </DashboardLayout>
+  );
+}
